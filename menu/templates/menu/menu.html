@@ -1,0 +1,21 @@
+{% load static %}
+
+<ul>
+    {% for item in menu_items %}
+        <li>
+            <a href="{{ item.url }}">{{ item.title }}</a>
+            {% if item.children.all %}
+                <button class="toggle-button" onclick="toggleMenu(this)">+</button>
+                <ul class="submenu" style="display: none;">
+                    {% include 'menu/menu.html' with menu_items=item.children.all %}
+                </ul>
+            {% endif %}
+        </li>
+    {% endfor %}
+</ul>
+
+<!-- Подключение CSS -->
+<link rel="stylesheet" type="text/css" href="{% static 'menu/css/styles.css' %}">
+
+<!-- Подключение JavaScript -->
+<script src="{% static 'menu/js/styles.js' %}"></script>
