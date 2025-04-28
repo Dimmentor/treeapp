@@ -1,10 +1,10 @@
 function toggleMenu(button) {
-    const submenu = button.nextElementSibling; // Получаем следующий элемент (подменю)
+    const submenu = button.nextElementSibling;
     if (submenu.style.display === "none") {
-        submenu.style.display = "block"; // Показываем подменю
-        button.textContent = "-"; // Меняем знак на минус
+        submenu.style.display = "block";
+        button.textContent = "-";
     } else {
-        submenu.style.display = "none"; // Скрываем подменю
-        button.textContent = "+"; // Меняем знак на плюс
+        submenu.style.display = "none";
+        button.textContent = "+";
     }
 }
