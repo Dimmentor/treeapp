@@ -1,3 +1,4 @@
+{% load static %}
 {% load menu_tags %}
 
 <!DOCTYPE html>
@@ -5,14 +6,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Категории</title>
-</head>
-<body>
+    <title>Главная страница</title>
 
-<h1>Категории</h1>
+    <link rel="stylesheet" type="text/css" href="{% static 'menu/css/styles.css' %}">
+
+</head>
+<body style="background-color: #e9e9e9;">
+
+<h1 style="background-color: #4682B4; padding: 20px;">
+    <a href="https://drive.google.com/file/d/1Jv15BVdO7f8dLEved6KOqKfUngr3pFhk/view?usp=sharing" style="color: white; text-decoration: none;">Резюме автора</a>
+</h1>
+
+<h1>Древовидное меню категорий</h1>
 
 {% draw_menu 'main_menu' as menu_data %}
 {% include 'menu/menu.html' with menu_items=menu_data.menu_items %}
+
+
+<script src="{% static 'menu/js/styles.js' %}"></script>
 
 </body>
 </html>

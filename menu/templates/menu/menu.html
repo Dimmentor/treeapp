@@ -3,7 +3,7 @@
 <ul>
     {% for item in menu_items %}
         <li>
-            <a href="{{ item.slug }}">{{ item.title }}</a>
+            <a href="{% url 'category' item.slug %}" class="category-button">{{ item.title }}</a>
             {% if item.children.all %}
                 <button class="toggle-button" onclick="toggleMenu(this)">+</button>
                 <ul class="submenu" style="display: none;">
@@ -14,8 +14,6 @@
     {% endfor %}
 </ul>
 
-<!-- Подключение CSS -->
-<link rel="stylesheet" type="text/css" href="{% static 'menu/css/styles.css' %}">
 
-<!-- Подключение JavaScript -->
+<link rel="stylesheet" type="text/css" href="{% static 'menu/css/styles.css' %}">
 <script src="{% static 'menu/js/styles.js' %}"></script>
