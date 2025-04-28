@@ -3,7 +3,7 @@
 <ul>
     {% for item in menu_items %}
         <li>
-            <a href="{{ item.url }}">{{ item.title }}</a>
+            <a href="{{ item.slug }}">{{ item.title }}</a>
             {% if item.children.all %}
                 <button class="toggle-button" onclick="toggleMenu(this)">+</button>
                 <ul class="submenu" style="display: none;">
