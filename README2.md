@@ -122,6 +122,7 @@ from django.dispatch import receiver
 def user_created(sender, instance, created, **kwargs):
     if created:
         print("Новый пользователь создан!")
+        
 ### 8) Как написать кастомную команду для manage.py?
 **Ответ**: Создать файл management/commands/mycommand.py в приложении.
 
@@ -152,6 +153,7 @@ Proxy-модель (если нужно только добавить метод
 
 python
 AUTH_USER_MODEL = "myapp.CustomUser"  # в settings.py
+
 ### 10) Что такое Permission и Group в Django?
 **Ответ**:
 Permission – права доступа (например, can_publish_post).
@@ -166,6 +168,7 @@ from django.contrib.auth.models import Group, Permission
 editors = Group.objects.create(name="Редакторы")
 permission = Permission.objects.get(codename="publish_post")
 editors.permissions.add(permission)
+
 ### 11) Что будет если поменять SECRET_KEY?
 **Ответ**:
 Сессии пользователей станут недействительными.
@@ -188,6 +191,7 @@ Author.objects.select_related('profile').get(id=1)
 
 # 2 запроса: авторы + их книги
 Author.objects.prefetch_related('books').all()
+
 ### 13) Когда prefetch_related будет лучше для связи один ко многим, чем select_related?
 **Ответ**:
 Если у родителя много детей (например, у Автора 1000 Книг), prefetch_related может быть эффективнее, чтобы избежать огромного JOIN.
@@ -203,6 +207,7 @@ from django.db.models import OuterRef, Subquery
 
 newest = Comment.objects.filter(post=OuterRef('pk')).order_by('-created_at')
 Post.objects.annotate(newest_comment_text=Subquery(newest.values('text')[:1]))
+
 ### 15) Какая разница между only, values и values_list?
 **Ответ**:
 only('field') – загружает только указанные поля, но остальные доступны (ленивая загрузка).
@@ -221,6 +226,7 @@ python
 from django.db.models import Q
 
 Post.objects.filter(Q(title__startswith="Django") | Q(title__startswith="Python"))
+
 ### 17) Что такое F-выражения?
 **Ответ**:
 Позволяют ссылаться на значение поля в запросе.
@@ -231,6 +237,7 @@ python
 from django.db.models import F
 
 Product.objects.update(price=F('price') * 1.1)
+
 ### 18) Как создать 100 тысяч объектов в базе?
 **Ответ**:
 Через bulk_create:
@@ -294,6 +301,7 @@ Author.objects.annotate(avg_rating=Avg('books__rating'))
 
 # Общий средний рейтинг всех книг
 Book.objects.aggregate(Avg('rating'))
+
 ### 23) Что такое абстрактные модели?
 **Ответ**:
 Это модели, которые не создают таблицу в БД, но от них можно наследоваться.
@@ -310,6 +318,7 @@ class TimestampModel(models.Model):
 
 class Post(TimestampModel):
     title = models.CharField(max_length=100)
+    
 ### 24) Какие атрибуты у class Meta для моделей знаешь?
 **Ответ**:
 verbose_name – человекочитаемое имя.
@@ -333,6 +342,7 @@ with transaction.atomic():
     product = Product.objects.select_for_update().get(id=1)
     product.stock -= 1
     product.save()
+    
 ### 26) Что будет если обратимся к записям, заблокированным через select_for_update?
 **Ответ**:
 Запрос будет ждать, пока блокировка не снимется (если nowait=False) или получит ошибку (если nowait=True).
@@ -354,6 +364,7 @@ class IsEditor(BasePermission):
 
 class MyView(APIView):
     permission_classes = [IsEditor]
+    
 ### 29) Как дать разные доступ в рамках одного viewset для разных методов?
 **Ответ**:
 Через get_permissions:
@@ -364,6 +375,7 @@ class MyViewSet(ViewSet):
         if self.action == 'create':
             return [IsAdminUser()]
         return [IsAuthenticated()]
+        
 ### 30) Зачем нужен декоратор action?
 **Ответ**:
 Добавляет кастомные методы во ViewSet (например, @action(detail=True, methods=['post'])).
@@ -380,18 +392,14 @@ REST_FRAMEWORK = {
         'user': '100/hour',
     }
 }
-### 32) Что нравится или не нравится в DRF?
+
+### 32) Плюсы и минусы DRF
 **Ответ**:
-Плюсы:
+**Плюсы**:
+- Быстрое создание API
+- Гибкость (сериализаторы, permissions, throttling)
+- Поддержка REST
 
-Быстрое создание API.
-
-Гибкость (сериализаторы, permissions, throttling).
-
-Поддержка REST.
-
-Минусы:
-
-Иногда избыточность (можно сделать проще на FastAPI).
-
-Медленнее, чем чистое ASGI.
+**Минусы**:
+- Иногда избыточность
+- Медленнее, чем чистое ASGI
