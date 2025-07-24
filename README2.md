@@ -347,11 +347,11 @@ with transaction.atomic():
 **Ответ**:
 Запрос будет ждать, пока блокировка не снимется (если nowait=False) или получит ошибку (если nowait=True).
 
-### 27) Когда пригодится GenericForeignKey?
+### 27) GenericForeignKey?
 **Ответ**:
 Когда нужно связать модель с разными типами моделей (например, комментарии к Постам и Видео).
 
-### 28) Как реализовать проверку прав по наличию определённой группы у пользователя?
+### 28) Проверка прав по группам?
 **Ответ**:
 Через permission_classes в DRF:
 
@@ -365,7 +365,7 @@ class IsEditor(BasePermission):
 class MyView(APIView):
     permission_classes = [IsEditor]
     
-### 29) Как дать разные доступ в рамках одного viewset для разных методов?
+### 29) Разные права для методов ViewSet?
 **Ответ**:
 Через get_permissions:
 
@@ -376,11 +376,11 @@ class MyViewSet(ViewSet):
             return [IsAdminUser()]
         return [IsAuthenticated()]
         
-### 30) Зачем нужен декоратор action?
+### 30) Декоратор action?
 **Ответ**:
 Добавляет кастомные методы во ViewSet (например, @action(detail=True, methods=['post'])).
 
-### 31) Что такое throttling и как его настроить?
+### 31) Throttling?
 **Ответ**:
 Throttling – ограничение количества запросов.
 
