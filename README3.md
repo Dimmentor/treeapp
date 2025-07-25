@@ -67,7 +67,7 @@ OuterRef используется для создания коррелирова
 
 from django.db.models import OuterRef, Subquery
 
-# Найти последний комментарий для каждого поста
+Найти последний комментарий для каждого поста
 latest_comments = Comment.objects.filter(
     post=OuterRef('pk')
 ).order_by('-created_at')
@@ -92,7 +92,7 @@ posts = Post.objects.annotate(
 3) Как получить только нужные колонки из таблицы
 1. values() - возвращает словари:
 
-python
+
 Book.objects.values('title', 'author__name')
 # [{'title': 'Book1', 'author__name': 'Author1'}, ...]
 ### 2. values_list() - возвращает кортежи:
