@@ -34,7 +34,7 @@ F-выражения:
 
 Работают на уровне базы данных
 
-python
+
 from django.db.models import F
 
 Product.objects.update(price=F('price') * 1.1)  # Увеличить все цены на 10%
@@ -46,7 +46,7 @@ Func-выражения:
 
 Могут комбинироваться с другими выражениями
 
-python
+
 from django.db.models.functions import Concat, Upper
 
 Author.objects.annotate(
@@ -64,7 +64,7 @@ OuterRef используется для создания коррелирова
 
 Пример:
 
-python
+
 from django.db.models import OuterRef, Subquery
 
 # Найти последний комментарий для каждого поста
