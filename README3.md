@@ -90,26 +90,29 @@ posts = Post.objects.annotate(
 Автоматически разрешает связи между моделями
 
 ### 3) Как получить только нужные колонки из таблицы
+
 1. values() - возвращает словари:
 
 
 Book.objects.values('title', 'author__name')
-# [{'title': 'Book1', 'author__name': 'Author1'}, ...]
-### 2. values_list() - возвращает кортежи:
+[{'title': 'Book1', 'author__name': 'Author1'}, ...]
+2. values_list() - возвращает кортежи:
 
-python
 Book.objects.values_list('title', flat=True)  # ['Book1', 'Book2']
 Book.objects.values_list('id', 'title')  # [(1, 'Book1'), (2, 'Book2')]
-### 3. only() - загружает только указанные поля, но остальные доступны (ленивая загрузка):
 
-python
+
+3. only() - загружает только указанные поля, но остальные доступны (ленивая загрузка):
+
 books = Book.objects.only('title')
 for book in books:
     print(book.title)  # Загружено сразу
     print(book.author)  # Догрузится отдельным запросом
-### 4. defer() - противоположность only():
 
-python
+    
+4. defer() - противоположность only():
+
+
 books = Book.objects.defer('description')  # Не загружать описание
 Оптимизация:
 
@@ -117,10 +120,10 @@ only/defer уменьшают размер SELECT запроса
 
 values/values_list полностью исключают создание объектов модели
 
+
 ### 4) Что будет, если вызвать get и записей не будет найдено
 Вызывает исключение DoesNotExist:
 
-python
 try:
     book = Book.objects.get(id=999)
 except Book.DoesNotExist:
@@ -136,7 +139,6 @@ except Book.DoesNotExist:
 ### 5) Что будет, если вызвать get и записей будет найдено несколько
 Вызывает исключение MultipleObjectsReturned:
 
-python
 try:
     book = Book.objects.get(title='Common Title')
 except Book.MultipleObjectsReturned:
@@ -148,6 +150,7 @@ except Book.MultipleObjectsReturned:
 Использовать filter() вместо get() для неоднозначных запросов
 
 ### 6) В чем разница между blank и null
+
 Параметр	Формы	База данных	Пример
 blank=True	Поле может быть пустым в форме	Не влияет	name = models.CharField(blank=True)
 null=True	Не влияет	NULL в базе	count = models.IntegerField(null=True)
@@ -158,6 +161,7 @@ null=True	Не влияет	NULL в базе	count = models.IntegerField(null=Tr
 Для числовых полей null=True если нужно различать 0 и отсутствие значения
 
 ### 7) Как обновить только указанные поля при вызове метода save
+
 1. Использование update_fields:
 
 python
@@ -175,6 +179,7 @@ book.refresh_from_db(fields=['author'])  # Загрузить только autho
 Чтобы избежать перезаписи изменений других полей
 
 ### 8) Когда может пригодиться objects.none
+
 1. Возврат пустого QuerySet в методах:
 
 python
