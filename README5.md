@@ -476,9 +476,18 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 ```
 ### 30) В чем разница между lifespan и событиями startup и shutdown?
-lifespan	startup/shutdown
-Более гибкий (контекстный менеджер).	Простой декоратор.
-Подходит для асинхронных операций.	Работает только с синхронным кодом.
+* lifespan	
+Более гибкий (контекстный менеджер).
+
+Подходит для асинхронных операций.
+
+* startup/shutdown
+
+Простой декоратор.
+
+Работает только с синхронным кодом.
+
+
 Пример startup/shutdown:
 
 ```sh
