@@ -88,10 +88,22 @@ except ValidationError as e:
     print(e.errors())
 ```
 ### 4) Чем отличается BaseModel от dataclass в Pydantic?
-BaseModel	dataclass
-Встроенная валидация данных.	Нет валидации (только аннотации типов).
-Поддержка alias, json_schema.	Только стандартные dataclass-функции.
-Методы model_dump(), model_validate().	Только dataclasses.asdict().
+* BaseModel
+
+Встроенная валидация данных.	
+
+Поддержка alias, json_schema.
+
+Методы model_dump(), model_validate().
+
+* dataclass
+
+Нет валидации (только аннотации типов).
+
+Только стандартные dataclass-функции.
+
+Только dataclasses.asdict().
+ 
 Пример dataclass:
 
 ```sh
