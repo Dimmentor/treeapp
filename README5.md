@@ -116,7 +116,7 @@ from pydantic import BaseModel, constr
 
 class Post(BaseModel):
     title: constr(min_length=1, max_length=100)
-### 7) Как задать значения по умолчанию для полей модели Pydantic?
+### 7) Как можно задать значения по умолчанию для полей модели Pydantic?
 Через присваивание значения в объявлении класса:
 
 python
@@ -137,7 +137,7 @@ class User(BaseModel):
         if value < 0:
             raise ValueError("Age cannot be negative")
         return value
-### 9) Разница между @validator, @root_validator, @before, @after, @wrap, @plain
+### 9) В чем разница между @validator, @root_validator, @before, @after, @wrap, и @plain валидаторами?
 @validator — проверяет отдельное поле.
 
 @root_validator — работает со всей моделью (все поля сразу).
@@ -150,21 +150,21 @@ class User(BaseModel):
 
 @plain — простой валидатор без контекста модели.
 
-### 10) Когда использовать @before валидатор?
+### 10) Когда следует использовать @before валидатор и какие задачи он решает?
 @before полезен для предварительной обработки данных:
 
 python
 @validator("name", pre=True)
 def trim_name(cls, value):
     return value.strip()  # Удаляет пробелы до валидации
-### 11) Как использовать @after валидатор?
+### 11) Как использовать @after валидатор и в каких случаях он применим?
 @after применяется для пост-обработки:
 
 python
 @validator("password", pre=False)
 def hash_password(cls, value):
     return hashlib.sha256(value.encode()).hexdigest()
-### 12) Что такое @wrap валидатор?
+### 12) Что такое @wrap валидатор и как он позволяет обернуть процесс валидации?
 @wrap оборачивает весь процесс валидации:
 
 python
@@ -174,7 +174,7 @@ from pydantic import validator
 def log_validation(cls, value, field):
     print(f"Validating {field.name}")
     return value
-### 13) Как работает @plain валидатор?
+### 13) Как работает @plain валидатор и чем он отличается от других типов валидаторов?
 @plain — это валидатор без доступа к другим полям модели:
 
 python
@@ -183,7 +183,7 @@ def validate_email(value):
     if "@" not in value:
         raise ValueError("Invalid email")
     return value
-### 14) Как использовать вложенные модели в Pydantic?
+### 14) Как можно использовать вложенные модели в Pydantic?
 Просто вложите одну модель в другую:
 
 python
@@ -192,7 +192,7 @@ class Address(BaseModel):
 
 class User(BaseModel):
     address: Address
-### 15) Как игнорировать поля при сериализации?
+### 15) Как игнорировать или исключать поля из сериализации в Pydantic модели?
 Через exclude в model_dump():
 
 python
@@ -203,7 +203,7 @@ python
 class User(BaseModel):
     class Config:
         exclude = {"email"}
-### 16) Алиасы полей (Field(..., alias='other_name'))
+### 16) Как работают алиасы полей (Field(..., alias='other_name')) в Pydantic?
 Позволяют использовать другое имя для поля в JSON:
 
 python
@@ -213,7 +213,7 @@ class User(BaseModel):
     name: str = Field(..., alias="username")
 
 user = User.parse_raw('{"username": "Alice"}')  # OK
-### 17) Как использовать Config для настройки модели?
+### 17) Как использовать Config для настройки поведения модели в Pydantic?
 Config позволяет настроить поведение модели:
 
 python
@@ -221,7 +221,7 @@ class User(BaseModel):
     class Config:
         allow_population_by_field_name = True  # Разрешить заполнение по alias
         extra = "forbid"  # Запретить неизвестные поля
-### 18) Как работает dict() (или model_dump()) в Pydantic?
+### 18) Как работает метод dict() в Pydantic и какие параметры он поддерживает?
 Преобразует модель в словарь:
 
 python
@@ -323,7 +323,7 @@ async def send_notification(
     return {"status": "Message sent"}
 log_task выполнится после возврата ответа клиенту.
 
-### 23) Что такое middleware в FastAPI и как его добавить?
+### 23) Что такое middleware в FastAPI и как его можно добавить в приложение?
 Middleware — это промежуточный слой, который обрабатывает запросы и ответы до/после основного эндпоинта.
 
 Пример middleware для логирования:
@@ -339,7 +339,7 @@ async def log_requests(request: Request, call_next):
     return response
 call_next передает запрос дальше по цепочке middleware и эндпоинтам.
 
-### 24) Как middleware влияет на обработку запросов и ответов?
+### 24) Как middleware в FastAPI может влиять на обработку запросов и ответов?
 Middleware может:
 
 Модифицировать запрос/ответ (например, добавлять заголовки).
@@ -360,7 +360,7 @@ app.add_middleware(
     allow_origins=["*"],
     allow_methods=["GET", "POST"],
 )
-### 25) Как использовать Pydantic модели для валидации запросов и ответов?
+### 25) Как использовать Pydantic модели для валидации запросов и ответов в FastAPI?
 FastAPI автоматически валидирует данные через Pydantic.
 
 Пример:
@@ -377,7 +377,7 @@ async def create_item(item: Item):  # Валидация запроса
     return {"item": item}  # Валидация ответа
 Если name не передать, FastAPI вернет 422 Unprocessable Entity.
 
-### 26) Как работает система маршрутов и параметры пути?
+### 26) Как в FastAPI работает система маршрутов и как можно задавать параметры в пути?
 Маршруты определяются через декораторы (@app.get, @app.post).
 
 Параметры пути (path parameters):
@@ -396,7 +396,7 @@ async def read_items(skip: int = 0, limit: int = 10):
     return {"skip": skip, "limit": limit}
 Вызов: /items/?skip=5&limit=20.
 
-### 27) Как управлять состоянием (state) в FastAPI?
+### 27) Как управлять состоянием сессии в FastAPI (например, использование state)?
 app.state хранит глобальные данные (например, подключение к БД).
 
 Пример:
@@ -407,7 +407,7 @@ app.state.database = "db_connection"
 @app.get("/db")
 async def get_db(db: str = Depends(lambda: app.state.database)):
     return {"db": db}
-### 28) Как использовать @app.exception_handler?
+### 28) Как использовать декоратор @app.exception_handler для обработки исключений?
 Позволяет перехватывать исключения и возвращать кастомные ответы.
 
 Пример:
@@ -422,7 +422,7 @@ async def custom_http_exception(request: Request, exc: HTTPException):
         status_code=exc.status_code,
         content={"error": exc.detail},
     )
-### 29) Что такое lifespan события в FastAPI?
+### 29) Что такое lifespan события в FastAPI и как их использовать?
 lifespan позволяет выполнять код при старте и остановке приложения (например, открыть/закрыть соединение с БД).
 
 Пример:
@@ -437,7 +437,7 @@ async def lifespan(app: FastAPI):
     print("Shutdown: Close DB connection")
 
 app = FastAPI(lifespan=lifespan)
-### 30) Разница между lifespan и startup/shutdown событиями?
+### 30) В чем разница между lifespan и событиями startup и shutdown?
 lifespan	startup/shutdown
 Более гибкий (контекстный менеджер).	Простой декоратор.
 Подходит для асинхронных операций.	Работает только с синхронным кодом.
@@ -451,7 +451,7 @@ async def startup():
 @app.on_event("shutdown")
 async def shutdown():
     print("App stopped")
-### 31) Как обрабатывать ресурсы в lifespan?
+### 31) Как обрабатывать ресурсы и их освобождение в рамках lifespan в FastAPI?
 Используйте try/finally или contextlib:
 
 python
