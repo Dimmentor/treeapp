@@ -138,27 +138,55 @@ class Post(BaseModel):
     title: constr(min_length=1, max_length=100)
 ```
 ### 7) Как можно задать значения по умолчанию для полей модели Pydantic?
-Через присваивание значения в объявлении класса:
+* Через присваивание значения в объявлении класса:
 
 ```sh
 class User(BaseModel):
     id: int
     role: str = "user"  # Значение по умолчанию
 ```
+
+* В Pydantic значения по умолчанию для полей модели задаются с помощью параметра default в функции Field или с помощью default_factory для динамически генерируемых значений.
+```sh
+from pydantic import BaseModel, Field
+import uuid
+
+class Item(BaseModel):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    name: str = "Item"
+    price: float = 0.0
+```
 ### 8) Как определить кастомный валидатор для поля модели в Pydantic?
-Используйте декоратор @validator:
+Для создания кастомного валидатора поля модели в Pydantic используется декоратор @field_validator, который применяется к функции, выполняющей валидацию. Эта функция принимает значение поля в качестве аргумента и может возвращать измененное значение или возбуждать исключение ValueError при ошибке валидации. 
 
 ```sh
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator, ValidationError
 
-class User(BaseModel):
-    age: int
+class Item(BaseModel):
+    price: float
+    quantity: int
 
-    @validator("age")
-    def check_age(cls, value):
-        if value < 0:
-            raise ValueError("Age cannot be negative")
+    @field_validator('price')
+    def price_must_be_positive(cls, value):
+        if value <= 0:
+            raise ValueError('Цена должна быть положительной')
         return value
+
+    @field_validator('quantity')
+    def quantity_must_be_positive(cls, value):
+        if value <= 0:
+            raise ValueError('Количество должно быть положительным')
+        return value
+
+# Пример использования
+try:
+    item = Item(price=10.5, quantity=5)
+    print(item)
+
+    item = Item(price=-5.0, quantity=2)
+    print(item) # Этот код не выполнится, т.к. выше будет исключение
+except ValidationError as e:
+    print(e)
 ```
 ### 9) В чем разница между @validator, @root_validator, @before, @after, @wrap, и @plain валидаторами?
 @validator — проверяет отдельное поле.
