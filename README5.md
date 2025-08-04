@@ -193,7 +193,7 @@ except ValidationError as e:
 ### 9) В чем разница между @validator, @root_validator, @before, @after, @wrap, и @plain валидаторами?
 @validator — проверяет отдельное поле.
 
-@root_validator — работает со всей моделью (все поля сразу).
+@root_validator(@model_validator) — работает со всей моделью (все поля сразу).
 
 #### pydantic.functional_validators:
 
