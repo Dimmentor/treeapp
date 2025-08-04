@@ -307,35 +307,115 @@ class User(BaseModel):
 user = User.parse_raw('{"username": "Alice"}')  # OK
 ```
 ### 17) Как использовать Config для настройки поведения модели в Pydantic?
-Config позволяет настроить поведение модели:
+Класс Config внутри Pydantic модели позволяет настроить её поведение. Вот основные параметры, которые можно задать:
+
+1. Настройки валидации
+
+* extra	Как обрабатывать лишние поля ("allow", "ignore", "forbid").
+* strict	Режим строгой проверки типов (bool).
+* validate_all	Валидировать все поля, даже если не переданы (bool).
+* validate_assignment	Валидировать поля при изменении атрибутов (bool).
+* arbitrary_types_allowed	Разрешить произвольные типы (bool).
+* from_attributes	Разрешить загрузку данных из атрибутов объектов (ранее orm_mode).
+Пример:
 
 ```sh
 class User(BaseModel):
+    name: str
+
     class Config:
-        allow_population_by_field_name = True  # Разрешить заполнение по alias
-        extra = "forbid"  # Запретить неизвестные поля
+        extra = "forbid"  # Запрещает лишние поля
+        strict = True     # Строгая проверка типов
 ```
-* allow_mutation: если установлено значение False, делает модель неизменяемой после создания. По умолчанию True.
+2. Настройки JSON и сериализации
 
-* extra: определяет, как модель должна обрабатывать дополнительные (не определённые в модели) поля при валидации. Возможные значения:
+* json_encoders	Кастомные сериализаторы для типов (Dict[Type, Callable]).
+* json_schema_extra	Дополнительные поля для JSON-схемы (Dict или Callable).
+* json_loads	Функция для парсинга JSON (по умолчанию json.loads).
+* json_dumps	Функция для сериализации в JSON (по умолчанию json.dumps).
+  
+```sh
+from datetime import datetime
 
-Extra.forbid: запрещает дополнительные поля (по умолчанию).
+class Event(BaseModel):
+    date: datetime
 
-Extra.ignore: игнорирует дополнительные поля.
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.strftime("%Y-%m-%d")  # Сериализация даты
+        }
+```
+3. Настройки документации (OpenAPI/Swagger)
 
-Extra.allow: позволяет дополнительные поля.
+* title	Заголовок модели для схемы.
+* description	Описание модели.
+* schema_extra	Дополнительные поля для схемы (аналог json_schema_extra).
+  
+```sh
+class Product(BaseModel):
+    id: int
 
-* validate_assignment: если установлено значение True, включает проверку значений при присваивании новых значений атрибутам модели. По умолчанию False.
+    class Config:
+        title = "Product Model"
+        description = "Модель товара с идентификатором"
+        schema_extra = {
+            "example": {"id": 1}  # Пример для документации
+        }
+```
+4. Настройки алиасов и имен полей
 
-* orm_mode: если установлено значение True, позволяет использовать модели Pydantic с ORM (Object-Relational Mapping) библиотеками, такими как SQLAlchemy. По умолчанию False.
+* alias_generator	Функция для генерации алиасов (Callable[[str], str]).
+* populate_by_name	Разрешить заполнение полей по имени (не только по алиасу) (bool).
+* allow_population_by_field_name	Устаревший аналог populate_by_name.
+  
+```sh
+class Item(BaseModel):
+    item_name: str
 
-* populate_by_name: если установлено значение True, позволяет устанавливать значения полей модели, используя имена полей, а не атрибуты. По умолчанию False.
+    class Config:
+        alias_generator = lambda x: x.upper()  # Алиасы в верхнем регистре
+        populate_by_name = True
+```
+5. Настройки для работы с ORM (SQLAlchemy, Django)
 
-* arbitrary_types_allowed: если установлено значение True, позволяет использовать типы данных, которые не являются подклассами BaseModel или встроенных типов данных Python. По умолчанию False.
+* from_attributes	Загрузка данных из атрибутов объекта (ранее orm_mode) (bool).
+* use_enum_values	Сохранять значения Enum (а не объекты) при сериализации (bool).
+  
+```sh
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
 
-* json_encoders: словарь, который определяет пользовательские функции кодирования для определённых типов данных при сериализации в JSON.
+Base = declarative_base()
 
-* frozen: если установлено значение True, делает модель неизменяемой после создания. Эквивалентно allow_mutation=False.
+class UserDB(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+
+class UserPydantic(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attributes = True  # Загрузка из SQLAlchemy-модели
+
+user_db = UserDB(id=1, name="Alice")
+user = UserPydantic.model_validate(user_db)  # Автоматическая конвертация
+```
+6. Прочие настройки
+
+* frozen	Запретить изменение полей после создания (bool).
+* hide_input_in_errors	Скрывать значения полей в ошибках валидации (bool).
+* regex_engine	Движок для regex-валидации ("python-re" или "rust-re").
+  
+```sh
+class ConfigModel(BaseModel):
+    secret: str
+
+    class Config:
+        frozen = True  # Модель становится неизменяемой
+        hide_input_in_errors = True  # Скрывает 'secret' в ошибках
+```
 
 ### 18) Как работает метод dict() в Pydantic и какие параметры он поддерживает?
 Метод dict() в Pydantic используется для преобразования модели в обычный словарь Python. Это может быть полезно при необходимости работы с данными вне контекста Pydantic или при сериализации данных.
