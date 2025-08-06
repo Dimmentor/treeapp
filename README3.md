@@ -412,12 +412,13 @@ Django позволяет использовать различные бэкен
 ### 17) Проверка прав по группе
 1. Permission класс:
 
-python
+```sh
 from rest_framework.permissions import BasePermission
 
 class IsEditor(BasePermission):
     def has_permission(self, request, view):
         return request.user.groups.filter(name='editors').exists()
+```
 2. Использование в View:
 
 ```sh
