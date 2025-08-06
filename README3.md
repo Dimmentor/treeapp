@@ -24,7 +24,7 @@
 21. [Unit of Work](#21-unit-of-work)  
 22. [Сборщик мусора в Python](#22-сборщик-мусора-в-python)
 23. [Django](#23-django)
-
+24. [@action](#23-@action)
 
 ### 1) Отличие F от Func
 В Django объект F и функция Func используются для работы с выражениями в ORM, но для разных целей. F представляет собой поле модели или его значение, позволяя ссылаться на данные непосредственно в запросе к базе данных. Func же используется для создания вычислений или агрегаций в запросах, часто применяясь для сложных операций с данными в базе. 
@@ -649,3 +649,49 @@ ORM Django может быть менее гибким и функциональ
 Для реализации WebSocket функциональности требуется дополнительная настройка. 
 * Не подходит для очень маленьких проектов:
 Для очень простых проектов, требующих минимальной функциональности, Django может быть избыточным. 
+
+
+### 24) @action
+
+Декоратор @action в Django REST Framework используется для добавления дополнительных пользовательских действий в ViewSets. Эти действия не соответствуют стандартным CRUD (Create, Read, Update, Delete) операциям и могут быть настроены для работы с отдельными экземплярами (detail=True) или со всей коллекцией (detail=False). 
+
+* Расширение функциональности ViewSets:
+Позволяет добавлять логику, не вписывающуюся в стандартный набор операций ViewSet, например, активация/деактивация объекта, изменение статуса, получение специфической информации и т.д. 
+* Улучшение маршрутизации:
+@action автоматически добавляет новые маршруты для этих действий, что делает их доступными через URL. 
+* Поддержка различных HTTP-методов:
+Действия, определенные с помощью @action, могут обрабатывать различные HTTP-методы (GET, POST, PUT, DELETE и т.д.). 
+* Управление правами доступа:
+Можно настроить права доступа для каждого действия, используя permission_classes. 
+* Настройка URL:
+Аргументы url_path и url_name позволяют кастомизировать отображение URL и имени маршрута для конкретного действия. 
+
+
+```sh
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework import status
+from .models import MyModel
+from .serializers import MyModelSerializer
+
+class MyViewSet(viewsets.ModelViewSet):
+    queryset = MyModel.objects.all()
+    serializer_class = MyModelSerializer
+
+    @action(detail=True, methods=['post'], permission_classes=[])
+    def custom_action(self, request, pk=None):
+        """
+        Custom action example.
+        """
+        instance = self.get_object()
+        #  Логика вашего пользовательского действия
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+```
+
+В этом примере, custom_action - это пользовательское действие, которое может быть вызвано для конкретного экземпляра модели (detail=True) и принимает POST-запросы. 
+
+В итоге, @action делает ваши ViewSets более гибкими и позволяет расширять их функциональность, не привязываясь к стандартным операциям CRUD. 
