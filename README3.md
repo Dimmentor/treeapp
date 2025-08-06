@@ -160,48 +160,48 @@ book.refresh_from_db(fields=['author'])  # Загрузить только autho
 
 1. Возврат пустого QuerySet в методах:
 
-```sh
-def get_books(user):
-    if not user.has_perm('app.view_book'):
-        return Book.objects.none()
-    return Book.objects.all()
- ```
-   
-2. Начальное значение для агрегации:
+Метод objects.none() в Django используется для создания пустого QuerySet, то есть объекта, который представляет собой пустой набор результатов запроса к базе данных. Этот метод не выполняет запрос к базе данных и не возвращает никаких данных. Он просто создает объект QuerySet, который можно использовать в дальнейшем для операций фильтрации или объединения с другими QuerySet-ами.
 
-```sh
-books = Book.objects.none()
-for category in categories:
-    books |= category.books.all()
-```
-
-#### Преимущества:
-
-* Не выполняет SQL-запросов
-
-* Совместим с цепочками методов (filter, annotate и т.д.)
+#### Применение objects.none():
+* Условная фильтрация:
+Если вам нужно применить фильтрацию к QuerySet-у только при определенных условиях, вы можете начать с objects.none() и добавить фильтры, если условия выполняются.
+* Комбинирование QuerySet-ов:
+objects.none() может быть использован в качестве начального QuerySet для объединения с другими QuerySet-ами с помощью операторов | (union) или & (intersection), если вы хотите, чтобы начальный QuerySet не влиял на результат.
+* Предотвращение ненужных запросов к базе данных:
+Если в некоторых случаях вам не требуется выполнять запрос к базе данных, использование objects.none() позволяет избежать ненужной нагрузки на базу данных. 
 
 ### 9) Как совершить какое-либо действие после создания объекта модели
-1. Сигнал post_save:
+1. Django предоставляет сигналы, которые позволяют реагировать на события жизненного цикла модели. В частности, сигнал post_save вызывается после сохранения объекта. 
 
 ```sh
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from .models import MyModel
 
-@receiver(post_save, sender=Book)
-def book_created(sender, instance, created, **kwargs):
+@receiver(post_save, sender=MyModel)
+def my_model_post_save(sender, instance, created, **kwargs):
     if created:
-        print(f"Создана новая книга: {instance.title}")
+        # Действие, выполняемое при создании нового объекта
+        print(f"Создан новый объект {instance.name}")
+    else:
+        # Действие, выполняемое при обновлении существующего объекта
+        print(f"Объект {instance.name} обновлен")
 ```
-2. Переопределение save:
+2. Переопределите метод save() в вашей модели, чтобы выполнить необходимое действие после сохранения объекта. Внутри save() вы можете получить доступ к атрибутам объекта и выполнить любые операции, которые вам нужны. Не забудьте вызвать super().save() для выполнения стандартной логики сохранения. 
+
 
 ```sh
-class Book(models.Model):
+from django.db import models
+
+class MyModel(models.Model):
+    name = models.CharField(max_length=200)
+
     def save(self, *args, **kwargs):
-        created = not self.pk
-        super().save(*args, **kwargs)
-        if created:
-            print(f"Создана новая книга: {self.title}")
+        # Действие, выполняемое перед сохранением
+        print(f"Объект {self.name} будет сохранен")
+        super().save(*args, **kwargs)  # Вызываем стандартную логику сохранения
+        # Действие, выполняемое после сохранения
+        print(f"Объект {self.name} сохранен")
 ```
 #### Рекомендации:
 
@@ -210,7 +210,19 @@ class Book(models.Model):
 * Для сложной логики или внешних интеграций - сигналы
 
 ### 10) Что такое class Meta и для чего он нужен
-Класс Meta определяет метаданные модели:
+class Meta - это вложенный класс внутри определения модели, который используется для указания метаданных, относящихся к модели в целом. Она не является частью самой модели, а скорее предоставляет информацию о том, как Django должен работать с этой моделью в базе данных и других частях фреймворка. 
+
+#### Для чего нужен class Meta?
+* Настройка таблицы базы данных:
+Например, можно изменить имя таблицы, используемой для модели, или добавить индексы. 
+* Определение порядка сортировки:
+Можно указать, по каким полям сортировать результаты при выборке из базы данных. 
+* Управление пермиссиями:
+Можно определить права доступа к модели. 
+* Определение verbose_name:
+Можно задать более понятное имя для модели, которое будет использоваться в административном интерфейсе. 
+* Оптимизация запросов:
+Например, можно использовать db_table для указания таблицы базы данных, если имя модели отличается от имени таблицы. 
 
 ```sh
 class Book(models.Model):
@@ -237,9 +249,12 @@ class Book(models.Model):
 * constraints - ограничения уровня БД
 
 ### 11) Когда пригодится GenericForeignKey
-GenericForeignKey позволяет создать связь с любой другой моделью:
+GenericForeignKey в Django пригодится, когда нужно установить связь между моделью и несколькими другими моделями, при этом не зная заранее, с какой именно моделью будет связь. Это полезно, когда требуется гибкость в отношениях, и одна сущность может ссылаться на разные типы объектов. 
+
+Предположим, у вас есть модель Comment, которая может быть связана с разными типами объектов: Post, Photo, Article. Вместо того, чтобы создавать отдельные ForeignKey для каждого типа, вы можете использовать GenericForeignKey:
 
 ```sh
+from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 
@@ -248,21 +263,14 @@ class Comment(models.Model):
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
     text = models.TextField()
+
+class Post(models.Model):
+    title = models.CharField(max_length=200)
+
+class Photo(models.Model):
+    image = models.ImageField()
 ```
 
-Применение:
-
-Комментарии к разным типам объектов
-
-Логирование действий
-
-Универсальные рейтинги/лайки
-
-Альтернативы:
-
-Полиморфные модели (django-polymorphic)
-
-Отдельные связи для каждого типа
 
 ### 12) Где нужно и не нужно писать бизнес логику
 #### Правильные места:
@@ -302,101 +310,104 @@ class OrderService:
         # Сложная логика обработки
 ```
 ### 13) Что такое ModelViewSet и GenericViewSet
-ModelViewSet:
 
-Полный набор CRUD операций
+#### ModelViewSet наследуется от GenericAPIView и включает в себя миксины для реализации всех CRUD операций (list, retrieve, create, update, partial_update, destroy). 
+* Он предоставляет готовые обработчики для стандартных действий, связанных с моделью, что делает его удобным для быстрой разработки API, основанного на модели. 
+* Вам не нужно явно определять каждый метод действия (например, list, create, update), так как они уже реализованы в ModelViewSet. 
 
-Автоматическая маршрутизация
-
-Для стандартных операций с моделью
-
-```sh
-class BookViewSet(viewsets.ModelViewSet):
-    queryset = Book.objects.all()
-    serializer_class = BookSerializer
-```
-
-GenericViewSet:
-
-Базовый класс для кастомных действий
-
-Требует явного определения @action
-
-Для нестандартной логики
+#### GenericViewSet также является представлением на основе классов, но он предоставляет более базовый функционал, чем ModelViewSet.
+* Он наследуется от GenericAPIView и не имеет встроенных миксинов для CRUD операций.
+* Вместо этого, GenericViewSet предоставляет вам возможность комбинировать различные миксины для создания представлений с нужным набором действий.
+* Это полезно, когда вам нужно более тонко настроить поведение представления или когда вам не нужны все CRUD операции. 
+#### В чем разница?
+* ModelViewSet предоставляет готовые решения для работы с моделью, в то время как GenericViewSet дает больше гибкости в настройке действий.
+* ModelViewSet упрощает разработку API, основанного на модели, в то время как GenericViewSet позволяет создавать более специализированные API.
+* Если вам нужно простое CRUD API для модели, ModelViewSet будет лучшим выбором. Если вам нужно более сложное API или вы хотите настроить поведение представления, GenericViewSet будет более подходящим вариантом. 
 
 ```sh
-class ReportViewSet(viewsets.GenericViewSet):
-    @action(detail=False, methods=['get'])
-    def sales(self, request):
-        # Кастомная логика отчетов
+from rest_framework import viewsets
+from .models import MyModel
+from .serializers import MyModelSerializer
+
+class MyModelViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet для модели MyModel
+    """
+    queryset = MyModel.objects.all()
+    serializer_class = MyModelSerializer
+
+
+class MyGenericViewSet(viewsets.GenericViewSet):
+    """
+    GenericViewSet для модели MyModel
+    """
+    queryset = MyModel.objects.all()
+    serializer_class = MyModelSerializer
+    # Добавление миксинов и переопределение методов по необходимости
 ```
 ### 14) Как реализовать свой менеджер моделей
-1. Создание менеджера:
+
+Чтобы реализовать собственный менеджер моделей в Django, нужно создать класс, наследующий от django.db.models.Manager, и определить в нем необходимые методы, переопределяя или расширяя поведение по умолчанию. Этот новый менеджер затем можно назначить модели, чтобы управлять доступом к данным и выполнять специфичные для модели операции. 
 
 ```sh
-class PublishedManager(models.Manager):
+from django.db import models
+
+class MyModelManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().filter(status='published')
+        # Вернуть все объекты, отсортированные по убыванию ID
+        return super().get_queryset().order_by('-id')
 
-class Book(models.Model):
-    objects = models.Manager()  # Дефолтный менеджер
-    published = PublishedManager()  # Кастомный
-```
-2. Добавление методов:
+    def create_with_custom_logic(self, field_value):
+        # Создать объект с дополнительной логикой
+        obj = self.create(field=field_value)
+        # Дополнительные действия, если необходимо
+        return obj
 
-```sh
-class BookManager(models.Manager):
-    def bestsellers(self):
-        return self.filter(sales__gt=1000)
-        
-class Book(models.Model):
-    objects = BookManager()
+class MyModel(models.Model):
+    field = models.CharField(max_length=100)
+    objects = MyModelManager() # Назначение кастомного менеджера
 ```
-Использование:
-
-```sh
-Book.published.all()  # Только опубликованные
-Book.objects.bestsellers()  # Бестселлеры
-```
+#### Когда это полезно:
+* Фильтрация данных:
+Если вам нужно часто фильтровать данные модели по определенным критериям, вы можете создать метод в менеджере, который будет выполнять эту фильтрацию, упрощая код в представлениях. 
+* Создание объектов с предопределенными параметрами:
+Если вам нужно создавать объекты модели с определенными значениями по умолчанию или выполнять какие-то дополнительные действия при создании, вы можете добавить методы в менеджер для этого. 
+* Управление доступом:
+Вы можете использовать кастомные менеджеры для реализации логики контроля доступа к данным, например, возвращать только те объекты, которые доступны пользователю. 
+* Переопределение стандартного поведения:
+Если вам нужно изменить поведение стандартных методов, таких как get, filter, all и других, вы можете переопределить их в вашем кастомном менеджере. 
 
 ### 15) Какие запросы у методов QuerySet
-Метод	SQL-запрос	Особенности
-all()	SELECT * FROM table	Ленивый, не выполняется сразу
-filter()	SELECT ... WHERE	Цепочка условий AND
-get()	SELECT ... LIMIT 1	Немедленное выполнение
-create()	INSERT	Создает и сохраняет объект
-update()	UPDATE	Массовое обновление
-delete()	DELETE	Массовое удаление
-count()	SELECT COUNT(*)	Агрегация без загрузки объектов
+#### Метод	SQL-запрос	Особенности
+* all()	| SELECT * FROM table | Ленивый, не выполняется сразу
+* filter() | SELECT ... WHERE | Цепочка условий AND
+* get() | SELECT ... LIMIT 1 | Немедленное выполнение
+* create() | INSERT | Создает и сохраняет объект
+* update() | UPDATE | Массовое обновление
+* delete() | DELETE | Массовое удаление
+* count() | SELECT COUNT(*) | Агрегация без загрузки объектов
 
 
 ### 16) Встроенная система аутентификации (django.contrib.auth)
-Компоненты:
+Предоставляет базовую функциональность для управления пользователями, аутентификации и авторизации в веб-приложениях. Она позволяет разработчикам не создавать систему аутентификации с нуля, а использовать готовые решения. 
+#### Основные компоненты и возможности:
+* Пользователи:
+Система управляет данными пользователей, включая их имена, пароли и другую информацию. 
+* Группы:
+Пользователи могут быть объединены в группы для упрощения управления правами доступа. 
+* Разрешения:
+Система предоставляет механизм для определения прав доступа пользователей к различным ресурсам и действиям. 
+* Аутентификация:
+Процесс подтверждения личности пользователя, обычно на основе имени пользователя и пароля. 
+* Авторизация:
+Определение, какие действия может выполнять аутентифицированный пользователь. 
+* Встроенные представления:
+Django предоставляет готовые представления (классы) для входа (LoginView), выхода (LogoutView), сброса пароля (PasswordResetView) и смены пароля (PasswordChangeView),. 
+* Бэкенды аутентификации:
+Django позволяет использовать различные бэкенды для аутентификации, включая стандартный бэкенд, использующий базу данных, и возможность создания кастомных бэкендов. 
+* Настройка:
+Система позволяет настраивать различные аспекты аутентификации, включая модель пользователя и бэкенды.
 
-Модели:
-
-User - стандартная модель пользователя
-
-Group - группы пользователей
-
-Permission - права доступа
-
-Аутентификация:
-
-Сессии и куки
-
-Backend-система (можно добавлять свои)
-
-Авторизация:
-
-Декораторы (@login_required)
-
-Permissions для views
-
-Настройка:
-
-python
-AUTH_USER_MODEL = 'myapp.CustomUser'  # Кастомная модель пользователя
 ### 17) Проверка прав по группе
 1. Permission класс:
 
@@ -408,56 +419,60 @@ class IsEditor(BasePermission):
         return request.user.groups.filter(name='editors').exists()
 2. Использование в View:
 
-python
+```sh
 class BookViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsEditor]
+```
 3. Проверка в шаблоне:
 
-html
+```sh
 {% if user.groups.filter.name == 'editors' %}
    <button>Редактировать</button>
 {% endif %}
+```
 ### 18) Разные доступы в ViewSet
 Через get_permissions:
 
-python
+```sh
 class BookViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['create', 'update', 'destroy']:
             return [IsAdminUser()]
         return [IsAuthenticated()]
+```
 Через @action:
 
-python
+```sh
 @action(detail=True, methods=['post'], permission_classes=[IsEditor])
 def publish(self, request, pk=None):
     ...
-
+```
     
 ### 19) Обход в глубину и ширину
-DFS (Depth-First Search):
+#### DFS (Depth-First Search):
 
-Рекурсивный обход "вглубь"
+* Рекурсивный обход "вглубь"
 
-Использует стек (явный или неявный)
+* Использует стек (явный или неявный)
 
 Применение: поиск пути, топологическая сортировка
 
-python
+```sh
 def dfs(node, visited):
     visited.add(node)
     for neighbor in node.neighbors:
         if neighbor not in visited:
             dfs(neighbor, visited)
-BFS (Breadth-First Search):
+```
+#### BFS (Breadth-First Search):
 
-Обход "по уровням"
+* Обход "по уровням"
 
-Использует очередь
+* Использует очередь
 
 Применение: кратчайший путь в невзвешенном графе
 
-python
+```sh
 from collections import deque
 
 def bfs(start):
@@ -469,6 +484,7 @@ def bfs(start):
             if neighbor not in visited:
                 visited.add(neighbor)
                 queue.append(neighbor)
+```
                 
 ### 20) Что такое DI
 Dependency Injection (DI) - паттерн, при котором зависимости передаются объекту извне, а не создаются внутри.
@@ -483,16 +499,17 @@ Dependency Injection (DI) - паттерн, при котором зависим
 
 Пример без DI:
 
-python
+```sh
 class ReportGenerator:
     def __init__(self):
         self.db = PostgreSQLConnection()  # Жесткая зависимость
         
     def generate(self):
         data = self.db.query(...)
+```
 Пример с DI:
 
-python
+```sh
 class ReportGenerator:
     def __init__(self, db_connection):  # Зависимость инжектируется
         self.db = db_connection
@@ -500,24 +517,21 @@ class ReportGenerator:
     def generate(self):
         data = self.db.query(...)
 
-# Использование
 generator = ReportGenerator(MySQLConnection())
-
+```
 
 ### 21) Unit of Work
 Unit of Work - паттерн, который отслеживает изменения объектов и выполняет все обновления БД одной транзакцией.
 
-Как реализован в Django:
+#### Как реализован в Django:
 
-При вызове save() объект добавляется в "грязный" список
+* При вызове save() объект добавляется в "грязный" список
 
-Перед завершением транзакции все изменения применяются
+* Перед завершением транзакции все изменения применяются
 
-Либо все изменения сохраняются, либо ни одного (атомарность)
+* Либо все изменения сохраняются, либо ни одного (атомарность)
 
-Пример:
-
-python
+```sh
 from django.db import transaction
 
 with transaction.atomic():  # Unit of Work
@@ -525,40 +539,41 @@ with transaction.atomic():  # Unit of Work
     order.add_item(...)
     order.calculate_total()
     # Все операции выполнятся или откатятся вместе
-
+```
     
 ### 22) Сборщик мусора в Python
 Механизмы:
 
-Счетчик ссылок:
+#### Счетчик ссылок:
 
-Каждый объект имеет счетчик ссылок
+* Каждый объект имеет счетчик ссылок
 
-При достижении 0 - память освобождается
+* При достижении 0 - память освобождается
 
-Не может обрабатывать циклические ссылки
+* Не может обрабатывать циклические ссылки
 
-Generational GC:
+#### Generational GC:
 
-Три поколения объектов (0, 1, 2)
+* Три поколения объектов (0, 1, 2)
 
-Новые объекты в поколении 0
+* Новые объекты в поколении 0
 
-Выжившие объекты переходят в старшие поколения
+* Выжившие объекты переходят в старшие поколения
 
-Чаще проверяет младшие поколения
+* Чаще проверяет младшие поколения
 
-Как работает:
+#### Как работает:
 
-Обнаружение достижимых объектов (mark)
+* Обнаружение достижимых объектов (mark)
 
-Удаление недостижимых (sweep)
+* Удаление недостижимых (sweep)
 
-Дефрагментация памяти (если необходимо)
+* Дефрагментация памяти (если необходимо)
 
 Управление:
 
-python
+```sh
 import gc
 gc.disable()  # Отключить GC
 gc.collect()  # Принудительный сбор
+```
