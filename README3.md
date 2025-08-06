@@ -23,7 +23,7 @@
 20. [Dependency Injection](#20-dependency-injection)  
 21. [Unit of Work](#21-unit-of-work)  
 22. [Сборщик мусора в Python](#22-сборщик-мусора-в-python)
-23. [О django](#22-о-django)
+23. [О Django](#22-о-django)
 
 
 ### 1) Отличие F от Func
