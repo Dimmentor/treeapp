@@ -434,14 +434,65 @@ class BookViewSet(viewsets.ModelViewSet):
 {% endif %}
 ```
 ### 18) Разные доступы в ViewSet
+Для управления доступом к разным методам в рамках одного ViewSet в Django REST Framework (DRF), можно переопределить метод get_permissions() и логику доступа в нем, в зависимости от текущего метода запроса. Это позволит реализовать разный уровень доступа для операций создания, чтения, обновления и удаления (CRUD) или любых других методов, определенных в ViewSet.
 Через get_permissions:
 
 ```sh
-class BookViewSet(viewsets.ModelViewSet):
+from rest_framework import permissions, viewsets
+from rest_framework.response import Response
+
+class MyViewSet(viewsets.ViewSet):
+    permission_classes = [permissions.IsAuthenticated]  # Базовый уровень доступа
+
     def get_permissions(self):
-        if self.action in ['create', 'update', 'destroy']:
-            return [IsAdminUser()]
-        return [IsAuthenticated()]
+        """
+        Определяет права доступа в зависимости от метода запроса.
+        """
+        if self.action == 'list':
+            permission_classes = [permissions.IsAdminUser] # Доступ только для администраторов для просмотра списка
+        elif self.action == 'create':
+            permission_classes = [permissions.IsAuthenticated] # Создавать могут все авторизованные
+        elif self.action in ['retrieve', 'update', 'partial_update', 'destroy']:
+            permission_classes = [permissions.IsAuthenticated, permissions.IsOwnerOrReadOnly] # Чтение, обновление и удаление - доступ для авторизованных и владельцев
+        else:
+            permission_classes = [permissions.IsAuthenticated] # Все остальные методы - общий доступ для авторизованных
+        return [permission() for permission in permission_classes]
+
+    def list(self, request):
+        # ... логика для получения списка ...
+        return Response({"message": "List of items"})
+
+    def create(self, request):
+        # ... логика для создания ...
+        return Response({"message": "Item created"}, status=201)
+
+    def retrieve(self, request, pk=None):
+        # ... логика для получения детальной информации ...
+        return Response({"message": "Item details"})
+
+    def update(self, request, pk=None):
+        # ... логика для обновления ...
+        return Response({"message": "Item updated"})
+
+    def partial_update(self, request, pk=None):
+        # ... логика для частичного обновления ...
+        return Response({"message": "Item partially updated"})
+
+    def destroy(self, request, pk=None):
+        # ... логика для удаления ...
+        return Response({"message": "Item deleted"})
+
+class IsOwnerOrReadOnly(permissions.BasePermission):
+    """
+    Права доступа: доступно для чтения всем, для записи только владельцу.
+    """
+    def has_object_permission(self, request, view, obj):
+        # Разрешить чтение для всех запросов
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        # Разрешить запись, если пользователь - владелец объекта
+        return obj.owner == request.user
 ```
 Через @action:
 
